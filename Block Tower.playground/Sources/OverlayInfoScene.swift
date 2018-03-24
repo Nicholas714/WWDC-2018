@@ -5,19 +5,28 @@ import SceneKit
 extension SKLabelNode {
     
     func fade() {
-        run(SKAction.sequence([SKAction.fadeOut(withDuration: 2.0), SKAction.run({
-            self.removeFromParent()
-        })]))
+        run(SKAction.fadeOut(withDuration: 0.5))
     }
     
     func show() {
-        run(SKAction.fadeIn(withDuration: 2.0))
+        run(SKAction.fadeIn(withDuration: 0.5))
+    }
+    
+    func showThenFade() {
+        alpha = 0
+        
+        show()
+        
+        Timer.scheduledTimer(withTimeInterval: 3, repeats: false, block: { (_) in
+            self.fade()
+        })
     }
     
 }
 
 class OverlayInfoScene: SKScene {
 
+    var title: SKLabelNode
     var line1Label: SKLabelNode
     var line2Label: SKLabelNode
     var bottomLabel: SKLabelNode
@@ -40,7 +49,8 @@ class OverlayInfoScene: SKScene {
         }
     }
     
-    init(size: CGSize, line1: String, line2: String, bottom: String) {
+    init(size: CGSize, top: String, line1: String, line2: String, bottom: String) {
+        title = SKLabelNode(text: top)
         line1Label = SKLabelNode(text: line1)
         line2Label = SKLabelNode(text: line2)
         bottomLabel = SKLabelNode(text: bottom)
@@ -51,12 +61,16 @@ class OverlayInfoScene: SKScene {
         
         setup()
     }
-    
+
     func setup() {
         let infoFont = UIFont.boldSystemFont(ofSize: 16.0).fontName
 
         scaleMode = .aspectFit
 
+        title.fontSize = 23
+        title.alpha = 0
+        title.fontName = infoFont
+        
         bottomLabel.fontSize = 16
         bottomLabel.alpha = 0
         bottomLabel.fontName = infoFont
@@ -78,11 +92,20 @@ class OverlayInfoScene: SKScene {
         [line1Label, line2Label, bottomLabel].forEach { (label) in
             label.show()
         }
-        
+    
         addChild(reset)
         addChild(ar)
+        addChild(title)
         
         updatePositions()
+    }
+    
+    func blackFadeOut() {
+        let background = SKShapeNode(rectOf: CGSize(width: 5000, height: 5000))
+        background.fillColor = UIColor.black
+        background.strokeColor = UIColor.black
+        addChild(background)
+        background.run(SKAction.fadeOut(withDuration: 10))
     }
     
     required public init?(coder aDecoder: NSCoder) {
@@ -91,8 +114,9 @@ class OverlayInfoScene: SKScene {
     
     func updatePositions() {
         bottomLabel.position = CGPoint(x: frame.midX, y: 10)
-        line1Label.position = CGPoint(x: frame.midX, y: frame.height - 125)
-        line2Label.position = CGPoint(x: frame.midX, y: frame.height - 100)
+        line2Label.position = CGPoint(x: frame.midX, y: frame.height - 125)
+        line1Label.position = CGPoint(x: frame.midX, y: frame.height - 100)
+        title.position = CGPoint(x: frame.midX, y: frame.height - 60)
         ar.position = CGPoint(x: frame.minX + reset.frame.width / 2 + 20, y: frame.maxY * 0.1)
         reset.position = CGPoint(x: frame.maxX - reset.frame.width / 2 - 20, y: frame.maxY * 0.1)
     }
@@ -123,6 +147,7 @@ class TowerButton: SKSpriteNode {
         label.fontSize = 19
         label.fontName = infoFont
         label.fontColor = UIColor.black
+        label.verticalAlignmentMode = .center
         
         let bg = SKShapeNode(rect: CGRect(origin: CGPoint.zero, size: buttonSize), cornerRadius: (buttonSize.height - 1) / 2)
         bg.strokeColor = UIColor.white
@@ -136,7 +161,7 @@ class TowerButton: SKSpriteNode {
         label.zPosition = 3
         zPosition = 2
         
-        label.position = CGPoint(x: frame.midX, y: frame.midY - label.frame.height / 2)
+        label.position = CGPoint(x: frame.midX, y: frame.midY)
         addChild(label)
     }
     

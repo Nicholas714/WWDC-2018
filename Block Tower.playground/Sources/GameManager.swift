@@ -14,8 +14,9 @@ public class GameManager {
         JTexture.loadTextures()
         loadSCNScene()
         loadARScene()
-        
-        show3D()
+
+        let intro = IntroScene()
+        PlaygroundPage.current.liveView = intro.sceneView
     }
     
     func loadARScene() {
@@ -32,13 +33,20 @@ public class GameManager {
         scnSceneView?.setup()
     }
     
+    func firstShow3D() {
+        show3D()
+        (scnSceneView.overlaySKScene as! OverlayInfoScene).blackFadeOut()
+    }
+    
     func showAR() {
         PlaygroundSupport.PlaygroundPage.current.liveView = arSceneView
+        (arSceneView.overlaySKScene as! OverlayInfoScene).title.showThenFade()
         is3D = false
     }
     
     func show3D() {
         PlaygroundSupport.PlaygroundPage.current.liveView = scnSceneView
+        (scnSceneView.overlaySKScene as! OverlayInfoScene).title.showThenFade()
         is3D = true 
     }
     

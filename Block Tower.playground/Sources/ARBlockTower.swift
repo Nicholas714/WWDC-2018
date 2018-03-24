@@ -16,7 +16,7 @@ class ARTowerView: ARSCNView, ARSCNViewDelegate, UIGestureRecognizerDelegate {
 
     var jScene: ARTowerScene!
     var towerCenter: SCNVector3?
-
+    
     // MARK: Creation of view
     
     func setup() {
@@ -38,7 +38,7 @@ class ARTowerView: ARSCNView, ARSCNViewDelegate, UIGestureRecognizerDelegate {
         
         session.run(configuration)
         
-        overlaySKScene = OverlayInfoScene(size: frame.size, line1: "Push out each block until the tower falls", line2: "Tap to push a block", bottom: "WWDC18")
+        overlaySKScene = OverlayInfoScene(size: frame.size, top: "Augmented Reality Scene", line1: "Move around the room and find a flat surface", line2: "Tap the yellow zone to place the tower", bottom: "WWDC18")
     }
     
     // MARK: ARSCNViewDelegate
@@ -104,6 +104,23 @@ class ARTowerView: ARSCNView, ARSCNViewDelegate, UIGestureRecognizerDelegate {
             if let first = arHit.first {
                 jScene.createTower(hit: first)
                 towerCenter = SCNVector3(x: first.worldTransform.columns.3.x, y: first.worldTransform.columns.3.y, z: first.worldTransform.columns.3.z)
+                (overlaySKScene as! OverlayInfoScene).line1Label.fade()
+                (overlaySKScene as! OverlayInfoScene).line2Label.fade()
+                
+                let line1Label = (self.overlaySKScene as! OverlayInfoScene).line1Label
+                let line2Label = (self.overlaySKScene as! OverlayInfoScene).line2Label
+                
+                Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false, block: { (_) in
+                    line1Label.text = "Push out each block until the tower falls"
+                    line2Label.text = "See how far you can stack up against gravity"
+                    line1Label.show()
+                    line2Label.show()
+                })
+                
+                Timer.scheduledTimer(withTimeInterval: 10, repeats: false, block: { (_) in
+                    line1Label.fade()
+                    line2Label.fade()
+                })
             }
             first.node.removeFromParentNode()
         } else {
@@ -111,6 +128,9 @@ class ARTowerView: ARSCNView, ARSCNViewDelegate, UIGestureRecognizerDelegate {
             
             if let povPos = pointOfView?.position {
                 let side = Side.camSide(cameraPosition: povPos, offset: towerCenter!)
+                
+                (overlaySKScene as! OverlayInfoScene).line1Label.fade()
+                (overlaySKScene as! OverlayInfoScene).line2Label.fade()
                 
                 switch side {
                 case .north:
@@ -199,7 +219,7 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
                 boxNode.physicsBody?.mass = 0.001
                 
                 boxNode.physicsBody?.friction = 1.0
-                boxNode.physicsBody?.rollingFriction = 1.0
+                boxNode.physicsBody?.rollingFriction = 0.0
 
                 nodeOrigin[boxNode] = boxNode.transform
 
@@ -228,7 +248,7 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
             
             let floorNode = SCNNode(geometry: floor)
             floorNode.name = "yellow-floor"
-            floorNode.position = SCNVector3(x: 0, y: -1, z: 0)
+            // floorNode.position = SCNVector3(x: 0, y: -1, z: 0)
             floorNode.transform = SCNMatrix4MakeRotation(-Float.pi / 2, 1, 0, 0)
             
             return floorNode
@@ -255,8 +275,6 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
         }) {
             if let origin = nodeOrigin[node] {
                 node.physicsBody?.clearAllForces()
-                //node.physicsBody = nil
-                //SCNAction.move(to: origin, duration: 1.0)
                 node.transform = origin
                 node.physicsBody?.resetTransform()
             }

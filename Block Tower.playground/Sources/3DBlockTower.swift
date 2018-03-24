@@ -42,16 +42,19 @@ class SCNTowerView: SCNView, ARSCNViewDelegate {
                 }
             }
         }
+        
         // add tap gesture to move blocks
         let tap = UITapGestureRecognizer(target: self, action: #selector(tapGesture(_:)))
         addGestureRecognizer(tap)
         
-        overlaySKScene = OverlayInfoScene(size: frame.size, line1: "Push out each block until the tower falls", line2: "Tap to push a block", bottom: "WWDC18")
+        overlaySKScene = OverlayInfoScene(size: frame.size, top: "3D Scene", line1: "Pan with your finger to look around the scene", line2: "Tap a block to push it", bottom: "WWDC18")
     }
     
     // TODO: add button to switch to ARView
     
     // MARK: Gestures
+    
+    var isSendingDirections = false
     
     @objc func tapGesture(_ gesture: UITapGestureRecognizer) {
         let location = gesture.location(in: self)
@@ -61,6 +64,28 @@ class SCNTowerView: SCNView, ARSCNViewDelegate {
         
         if let first = hit.first, let povPos = pointOfView?.position {
             let side = Side.camSide(cameraPosition: povPos)
+            
+            if first.node.name == "box" && !isSendingDirections {
+                isSendingDirections = true
+                
+                (overlaySKScene as! OverlayInfoScene).line1Label.fade()
+                (overlaySKScene as! OverlayInfoScene).line2Label.fade()
+                
+                let line1Label = (self.overlaySKScene as! OverlayInfoScene).line1Label
+                let line2Label = (self.overlaySKScene as! OverlayInfoScene).line2Label
+                
+                Timer.scheduledTimer(withTimeInterval: 0.6, repeats: false, block: { (_) in
+                    line1Label.text = "Push out each block until the tower falls"
+                    line2Label.text = "See how far you can stack up against gravity"
+                    line1Label.show()
+                    line2Label.show()
+                })
+                
+                Timer.scheduledTimer(withTimeInterval: 10, repeats: false, block: { (_) in
+                    line1Label.fade()
+                    line2Label.fade()
+                })
+            }
             
             switch side {
             case .north:
@@ -83,10 +108,12 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
     
     var sceneView: SCNTowerView!
     
-    var nodeOrigin = [SCNNode: SCNMatrix4]()
+    var nodeOrigin = [SCNNode: SCNVector3]()
+    var nodeRot = [SCNNode: SCNVector4]()
     let cameraNode = SCNNode()
     let camera = SCNCamera()
-    let camPos = SCNVector3(x: 0, y: 5, z: 25)
+    let camPos = SCNVector3(x: -5.7, y: 13.1, z: 14.1)
+    let camRot = SCNVector4(x: -0.67, y: -0.72, z: -0.14, w: 0.55)
     
     func setup(for sceneView: SCNTowerView) {
         self.sceneView = sceneView
@@ -98,16 +125,27 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
         
         physicsWorld.gravity = SCNVector3(0, -30, 0)
         
-        let sphere = SCNSphere(radius: 30)
-        sphere.firstMaterial?.isDoubleSided = true
-        sphere.firstMaterial?.diffuse.contents = UIImage(named: "clouds.jpg")
+        let material = SCNMaterial()
+        
+        material.lightingModel = .physicallyBased
+        material.diffuse.wrapS = .repeat
+        material.diffuse.wrapT = .repeat
+        material.isDoubleSided = true
+        material.diffuse.contents = UIImage(named: "floor.jpeg")
+        
+        let sphere = SCNSphere(radius: 180)
+        sphere.firstMaterial = material
         let bgSphere = SCNNode(geometry: sphere)
         rootNode.addChildNode(bgSphere)
+        
+       
     }
     
     func setupCamera() {
+        camera.zFar = 100000
         cameraNode.camera = camera
-        cameraNode.position = camPos 
+        cameraNode.position = camPos
+        cameraNode.rotation = camRot
         rootNode.addChildNode(cameraNode)
     }
     
@@ -141,12 +179,15 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
                     boxNode.rotation = SCNVector4(x: 0, y: 1, z: 0, w: Float.pi / 2)
                 }
                 
+                boxNode.name = "box"
                 boxNode.physicsBody = SCNPhysicsBody.dynamic()
                 boxNode.physicsBody?.friction = 0.9
+                // boxNode.physicsBody?.rollingFriction = 1.0
                 boxNode.physicsBody?.mass = 0.1
                 rootNode.addChildNode(boxNode)
                 
-                nodeOrigin[boxNode] = boxNode.transform
+                nodeOrigin[boxNode] = boxNode.position
+                nodeRot[boxNode] = boxNode.rotation
             }
         }
         
@@ -166,16 +207,25 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
         for node in rootNode.childNodes(passingTest: { (node, _) -> Bool in
             return node.geometry != nil && node.geometry! is SCNBox
         }) {
-            if let origin = nodeOrigin[node] {
-                sceneView.pointOfView?.position = camPos
-                sceneView.pointOfView?.rotation = SCNVector4(x: 0, y: 0, z: 0, w: 0)
+            if let origin = nodeOrigin[node], let rot = nodeRot[node] {
+                sceneView.pointOfView?.runAction(SCNAction.group([SCNAction.move(to: camPos, duration: 1), SCNAction.rotate(toAxisAngle: camRot, duration: 1)]))
                 sceneView.pointOfView?.camera?.fieldOfView = 60
                 
-                node.physicsBody?.clearAllForces()
-                //node.physicsBody = nil
-                //SCNAction.move(to: origin, duration: 1.0)
-                node.transform = origin
-                node.physicsBody?.resetTransform()
+                node.rotation = SCNVector4(x: 0, y: 0, z: 0, w: 0)
+                
+                node.physicsBody = nil
+                node.runAction(SCNAction.group([SCNAction.move(to: origin, duration: 1.0), SCNAction.rotate(toAxisAngle: rot, duration: 1.0)]))
+                
+                Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false, block: { (_) in
+                    node.physicsBody = SCNPhysicsBody.dynamic()
+                    node.physicsBody?.friction = 0.9
+                    // boxNode.physicsBody?.rollingFriction = 1.0
+                    node.physicsBody?.mass = 0.1
+                })
+                
+                
+                
+                //node.physicsBody?.resetTransform()
             }
         }
     }
