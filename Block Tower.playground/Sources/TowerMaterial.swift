@@ -13,7 +13,7 @@ public enum JTexture: String {
         JTexture.longSides = (1...16).map { return UIImage(named: "wood-long-\($0).jpeg") }
         JTexture.leftSides = (1...16).map { return UIImage(named: "wood-side-\($0).jpeg") }
         JTexture.shortSides = [UIImage(named: "wood-short-1.jpeg")]
-        JTexture.floorTexture = UIImage(named: "floor.jpeg")
+        JTexture.floorTexture = UIImage(named: "floor.png")
     }
 }
 
@@ -43,10 +43,11 @@ class JMaterial {
         if type == .floor {
             let material = SCNMaterial()
 
-            material.lightingModel = .physicallyBased
-            material.diffuse.contents = JTexture.floorTexture
             material.diffuse.wrapS = .repeat
             material.diffuse.wrapT = .repeat
+            
+            material.lightingModel = .physicallyBased
+            material.diffuse.contents = JTexture.floorTexture
             
             materials.append(material)
         } else {

@@ -132,6 +132,14 @@ class ARTowerView: ARSCNView, ARSCNViewDelegate, UIGestureRecognizerDelegate {
                 (overlaySKScene as! OverlayInfoScene).line1Label.fade()
                 (overlaySKScene as! OverlayInfoScene).line2Label.fade()
                 
+                if let body = first.node.physicsBody, !body.isAffectedByGravity {
+                    for node in scene.rootNode.childNodes(passingTest: { (node, _) -> Bool in
+                        return node.geometry != nil && node.geometry! is SCNBox
+                    }) {
+                        node.physicsBody?.isAffectedByGravity = true
+                    }
+                }
+                
                 switch side {
                 case .north:
                     first.node.physicsBody?.applyForce(SCNVector3(0, 0, -force), asImpulse: true)
@@ -155,13 +163,13 @@ class ARTowerView: ARSCNView, ARSCNViewDelegate, UIGestureRecognizerDelegate {
 
 class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
     
-    var nodeOrigin = [SCNNode: SCNMatrix4]()
+    var nodeOrigin = [SCNNode: SCNVector3]()
+    var nodeRot = [SCNNode: SCNVector4]()
+    
     var sceneView: ARTowerView!
     
     func setup(for sceneView: ARTowerView) {
         self.sceneView = sceneView
-        
-        physicsWorld.gravity = SCNVector3(x: 0, y: 0, z: 0)
         
         setupLighting()
     }
@@ -220,14 +228,16 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
                 
                 boxNode.physicsBody?.friction = 1.0
                 boxNode.physicsBody?.rollingFriction = 0.0
-
-                nodeOrigin[boxNode] = boxNode.transform
-
+                boxNode.physicsBody?.isAffectedByGravity = false
+                
+                nodeOrigin[boxNode] = boxNode.position
+                nodeRot[boxNode] = boxNode.rotation
+                
                 rootNode.addChildNode(boxNode)
             }
         }
         
-        physicsWorld.gravity = SCNVector3(x: 0, y: -0.01, z: 0)
+        physicsWorld.gravity = SCNVector3(x: 0, y: -10, z: 0) // -0.01
         
         let phy = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0.0), options: nil))
         phy.isAffectedByGravity = false
@@ -248,7 +258,6 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
             
             let floorNode = SCNNode(geometry: floor)
             floorNode.name = "yellow-floor"
-            // floorNode.position = SCNVector3(x: 0, y: -1, z: 0)
             floorNode.transform = SCNMatrix4MakeRotation(-Float.pi / 2, 1, 0, 0)
             
             return floorNode
@@ -270,14 +279,20 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
     }
     
     func resetWorld() {
-        for node in rootNode.childNodes(passingTest: { (node, _) -> Bool in
+        for _ in rootNode.childNodes(passingTest: { (node, _) -> Bool in
             return node.geometry != nil && node.geometry! is SCNBox
         }) {
-            if let origin = nodeOrigin[node] {
-                node.physicsBody?.clearAllForces()
-                node.transform = origin
-                node.physicsBody?.resetTransform()
+            self.sceneView.overlaySKScene = OverlayInfoScene(size: self.sceneView.frame.size, top: "Augmented Reality Scene", line1: "Move around the room and find a flat surface", line2: "Tap the yellow zone to place the tower", bottom: "WWDC18")
+            self.sceneView.towerCenter = nil
+            
+            for node in self.rootNode.childNodes {
+                if let geo = node.geometry {
+                    if geo is SCNBox || geo is SCNPlane {
+                        node.removeFromParentNode()
+                    }
+                }
             }
+            
         }
     }
     

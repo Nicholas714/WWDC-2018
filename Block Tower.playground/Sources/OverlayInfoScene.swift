@@ -104,8 +104,9 @@ class OverlayInfoScene: SKScene {
         let background = SKShapeNode(rectOf: CGSize(width: 5000, height: 5000))
         background.fillColor = UIColor.black
         background.strokeColor = UIColor.black
+        background.zPosition = 5
         addChild(background)
-        background.run(SKAction.fadeOut(withDuration: 10))
+        background.run(SKAction.fadeOut(withDuration: 2))
     }
     
     required public init?(coder aDecoder: NSCoder) {

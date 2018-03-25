@@ -131,7 +131,7 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
         material.diffuse.wrapS = .repeat
         material.diffuse.wrapT = .repeat
         material.isDoubleSided = true
-        material.diffuse.contents = UIImage(named: "floor.jpeg")
+        material.diffuse.contents = UIImage(named: "floor.png")
         
         let sphere = SCNSphere(radius: 180)
         sphere.firstMaterial = material
@@ -182,7 +182,6 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
                 boxNode.name = "box"
                 boxNode.physicsBody = SCNPhysicsBody.dynamic()
                 boxNode.physicsBody?.friction = 0.9
-                // boxNode.physicsBody?.rollingFriction = 1.0
                 boxNode.physicsBody?.mass = 0.1
                 rootNode.addChildNode(boxNode)
                 
@@ -196,7 +195,7 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
     func createFloor() {
         let floor = SCNFloor()
         JMaterial(type: .floor).apply(to: floor)
-        floor.reflectivity = 0.2
+        floor.reflectivity = 0.05
         let floorNode = SCNNode(geometry: floor)
         floorNode.position = SCNVector3(x: 50, y: 0, z: 50)
         floorNode.physicsBody = SCNPhysicsBody.static()
@@ -216,16 +215,14 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
                 node.physicsBody = nil
                 node.runAction(SCNAction.group([SCNAction.move(to: origin, duration: 1.0), SCNAction.rotate(toAxisAngle: rot, duration: 1.0)]))
                 
-                Timer.scheduledTimer(withTimeInterval: 2.0, repeats: false, block: { (_) in
+                Timer.scheduledTimer(withTimeInterval: 2.1, repeats: false, block: { (_) in
+                    node.rotation = rot
+                    node.position = origin
+                    
                     node.physicsBody = SCNPhysicsBody.dynamic()
                     node.physicsBody?.friction = 0.9
-                    // boxNode.physicsBody?.rollingFriction = 1.0
                     node.physicsBody?.mass = 0.1
                 })
-                
-                
-                
-                //node.physicsBody?.resetTransform()
             }
         }
     }
