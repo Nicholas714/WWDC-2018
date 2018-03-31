@@ -78,7 +78,7 @@ class IntroScene {
             self.scene.rootNode.addChildNode(wwdcNode)
             
             var rad: CGFloat = 4
-            Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { (_) in
+            Timer.scheduledTimer(withTimeInterval: 0.04, repeats: true) { (timer) in
                 if rad < 100 {
                     rad += 0.5
                     self.exp1.particleSize += 0.001
@@ -87,6 +87,8 @@ class IntroScene {
                     self.exp1.emitterShape = SCNCylinder(radius: rad, height: 40)
                     self.exp2.particleSize += 0.001
                     self.exp2.emitterShape = SCNCylinder(radius: rad, height: 40)
+                } else {
+                    timer.invalidate()
                 }
             }
         }
@@ -143,11 +145,14 @@ class IntroScene {
             updatePositions()
         }
         
+        var isStarted = false
+        
         override func touchesBegan(_ touches: Set<UITouch>, with event: UIEvent?) {
-            if let _ = touches.first {
-                intro.startTimers()
+            if let _ = touches.first, !isStarted {
                 startLabel.fade()
                 startBackground.run(SKAction.fadeOut(withDuration: 0.5))
+                self.intro.startTimers()
+                isStarted = true
             }
         }
         

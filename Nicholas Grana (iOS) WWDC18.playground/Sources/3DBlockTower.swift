@@ -128,12 +128,10 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
         let material = SCNMaterial()
         
         material.lightingModel = .physicallyBased
-        material.diffuse.wrapS = .repeat
-        material.diffuse.wrapT = .repeat
         material.isDoubleSided = true
         material.diffuse.contents = UIImage(named: "floor.png")
         
-        let sphere = SCNSphere(radius: 180)
+        let sphere = SCNSphere(radius: 160)
         sphere.firstMaterial = material
         let bgSphere = SCNNode(geometry: sphere)
         rootNode.addChildNode(bgSphere)
@@ -195,7 +193,7 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
     func createFloor() {
         let floor = SCNFloor()
         JMaterial(type: .floor).apply(to: floor)
-        floor.reflectivity = 0.05
+        floor.reflectivity = 0.2
         let floorNode = SCNNode(geometry: floor)
         floorNode.position = SCNVector3(x: 50, y: 0, z: 50)
         floorNode.physicsBody = SCNPhysicsBody.static()
@@ -228,4 +226,3 @@ class SCNTowerScene: SCNScene, UIGestureRecognizerDelegate {
     }
     
 }
-

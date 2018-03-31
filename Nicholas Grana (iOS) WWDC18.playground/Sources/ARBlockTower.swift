@@ -226,8 +226,7 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
                 boxNode.physicsBody?.allowsResting = false
                 boxNode.physicsBody?.mass = 0.001
                 
-                boxNode.physicsBody?.friction = 1.0
-                boxNode.physicsBody?.rollingFriction = 0.0
+                boxNode.physicsBody?.friction = 0.9
                 boxNode.physicsBody?.isAffectedByGravity = false
                 
                 nodeOrigin[boxNode] = boxNode.position
@@ -237,7 +236,7 @@ class ARTowerScene: SCNScene, UIGestureRecognizerDelegate {
             }
         }
         
-        physicsWorld.gravity = SCNVector3(x: 0, y: -10, z: 0) // -0.01
+        physicsWorld.gravity = SCNVector3(x: 0, y: -0.01, z: 0) 
         
         let phy = SCNPhysicsBody(type: .dynamic, shape: SCNPhysicsShape(geometry: SCNBox(width: 0.1, height: 0.1, length: 0.1, chamferRadius: 0.0), options: nil))
         phy.isAffectedByGravity = false
