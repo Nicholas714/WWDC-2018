@@ -4,7 +4,7 @@ A SceneKit and ARKit virtual Block Tower to see how you stack up against gravity
 [View on YouTube](https://youtu.be/xpKNT1dRKks)
 
 ### Screenshots 
-![Introduction Scene](Intro1.jpg)
-![Introduction Scene](Intro2.jpg)
-![Game Scene](Game1.jpg)
-![Game Scene](Game2.jpg)
+![Introduction Scene](Intro1.png)
+![Introduction Scene](Intro2.png)
+![Game Scene](Game1.png)
+![Game Scene](Game2.png)
